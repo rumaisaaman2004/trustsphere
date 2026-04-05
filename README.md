@@ -39,7 +39,7 @@ Built with modern React practices and a focus on professional UI/UX, TrustSphere
 
 ## 🚀 Live Demo
 
-**[View Live Demo](https://your-vercel-link.vercel.app)** 
+**[View Live Demo](https://trustsphere-eta.vercel.app/)** 
 
 > ⚡ *Demo Credentials:*
 > - Email: `demo@trustsphere.com`
