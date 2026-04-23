@@ -3,45 +3,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==================== LIGHT THEME (BLACK & WHITE) ==================== */
+/* Light Theme (Default) */
 :root {
-  --bg-main: #f5f5f5;
+  --bg-main: #f8fafc;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #fafafa;
-  --text-primary: #000000;
-  --text-secondary: #333333;
-  --text-muted: #666666;
-  --border: #e0e0e0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border: #e2e8f0;
   --card-bg: #ffffff;
-  --accent: #000000;
-  --accent-hover: #333333;
-  --accent-green: #22c55e;
-  --accent-red: #ef4444;
 }
 
-/* ==================== DARK THEME (KEEP AS IS) ==================== */
+/* Dark Theme */
 .dark {
-  --bg-main: #020617;
-  --bg-secondary: #0f172a;
-  --bg-tertiary: #1e293b;
+  --bg-main: #0f172a;
+  --bg-secondary: #1e293b;
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border: #1e293b;
-  --card-bg: #111827;
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-green: #22c55e;
-  --accent-red: #ef4444;
+  --border: #334155;
+  --card-bg: #1e293b;
 }
 
 body {
   background-color: var(--bg-main);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
-/* Cards */
+/* Card */
 .premium-card {
   background-color: var(--card-bg);
   border: 1px solid var(--border);
@@ -54,11 +42,7 @@ body {
   transform: translateY(-2px);
 }
 
-.dark .premium-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* Stat Cards */
+/* Stat Card */
 .stat-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -72,24 +56,19 @@ body {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.dark .stat-card:hover {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* Tables */
+/* Table */
 .premium-table {
   width: 100%;
 }
 
 .premium-table th {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
   color: var(--text-secondary);
   padding: 1rem;
   font-size: 0.75rem;
   font-weight: 600;
   text-align: left;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border);
 }
 
@@ -101,40 +80,42 @@ body {
 }
 
 .premium-table tr:hover td {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
 }
 
-/* Buttons - Black & White for Light Theme */
+/* Buttons */
 .btn-primary {
-  background-color: var(--accent);
+  background-color: #000000;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 10px;
   font-weight: 500;
   transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-primary:hover {
-  background-color: var(--accent-hover);
+  background-color: #333333;
   transform: translateY(-1px);
 }
 
-.btn-premium {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
+.btn-secondary {
+  background-color: #e5e5e5;
+  color: #000000;
   padding: 0.5rem 1rem;
   border-radius: 10px;
   font-weight: 500;
   transition: all 0.2s ease;
-  border: 1px solid var(--border);
+  border: none;
+  cursor: pointer;
 }
 
-.btn-premium:hover {
-  background-color: var(--border);
-  transform: translateY(-1px);
+.btn-secondary:hover {
+  background-color: #cccccc;
 }
 
-/* Inputs */
+/* Input */
 .input-premium {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -147,12 +128,8 @@ body {
 
 .input-premium:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
-}
-
-.dark .input-premium:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #000000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Scrollbar */
@@ -162,15 +139,27 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--text-muted);
+  background: #c1c1c1;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: #a8a8a8;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555555;
 }

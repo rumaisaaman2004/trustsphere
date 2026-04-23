@@ -4,9 +4,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaUser, FaHandHoldingHeart, FaArrowLeft, FaGoogle } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { useApp } from '../context/AppContext';
+import { registerUser, loginUser } from '../services/api';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -16,41 +18,74 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const { darkMode } = useApp();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
     if (isLogin) {
-      if (formData.email && formData.password) {
-        if (formData.password.length < 6) {
-          toast.error('Password must be at least 6 characters');
-          return;
-        }
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', formData.email);
-        toast.success('Login successful!');
-        setTimeout(() => navigate('/app'), 1000);
-      } else {
+      if (!formData.email || !formData.password) {
         toast.error('Please fill all fields');
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const result = await loginUser({
+          email: formData.email,
+          password: formData.password
+        });
+        
+        if (result.token) {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userEmail', result.email);
+          toast.success('Login successful!');
+          setTimeout(() => navigate('/app'), 1000);
+        } else {
+          toast.error(result.message || 'Login failed');
+        }
+      } catch (error) {
+        toast.error('Server error. Please try again.');
       }
     } else {
-      if (formData.name && formData.email && formData.password && formData.confirmPassword) {
-        if (formData.password !== formData.confirmPassword) {
-          toast.error('Passwords do not match');
-          return;
-        }
-        if (formData.password.length < 6) {
-          toast.error('Password must be at least 6 characters');
-          return;
-        }
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', formData.email);
-        localStorage.setItem('userName', formData.name);
-        toast.success('Account created successfully!');
-        setTimeout(() => navigate('/app'), 1000);
-      } else {
+      if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
         toast.error('Please fill all fields');
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match');
+        setLoading(false);
+        return;
+      }
+      
+      if (formData.password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const result = await registerUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+        
+        if (result.token) {
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('userEmail', result.email);
+          localStorage.setItem('userName', result.name);
+          toast.success('Account created successfully!');
+          setTimeout(() => navigate('/app'), 1000);
+        } else {
+          toast.error(result.message || 'Registration failed');
+        }
+      } catch (error) {
+        toast.error('Server error. Please try again.');
       }
     }
+    setLoading(false);
   };
 
   const handleChange = (e) => {
@@ -73,11 +108,10 @@ const AuthPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className={`rounded-2xl shadow-xl w-full max-w-md overflow-hidden border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}
       >
-        {/* Header */}
         <div className={`p-8 text-center border-b ${darkMode ? 'bg-gray-950 border-gray-800' : 'bg-white border-gray-200'}`}>
           <div className="flex justify-center mb-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-black shadow-lg rounded-2xl">
-              <FaHandHoldingHeart className="text-3xl text-white" />
+            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center shadow-lg">
+              <FaHandHoldingHeart className="text-white text-3xl" />
             </div>
           </div>
           <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
@@ -88,7 +122,6 @@ const AuthPage = () => {
           </p>
         </div>
 
-        {/* Form */}
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
@@ -167,19 +200,12 @@ const AuthPage = () => {
               </div>
             )}
 
-            {isLogin && (
-              <div className="text-right">
-                <button type="button" className={`text-sm transition-colors ${darkMode ? 'text-gray-400 hover:text-blue-400' : 'text-gray-600 hover:text-black'}`}>
-                  Forgot Password?
-                </button>
-              </div>
-            )}
-
             <button
               type="submit"
-              className="w-full py-3 mt-4 font-medium text-white transition-all bg-black shadow-md hover:bg-gray-800 rounded-xl"
+              disabled={loading}
+              className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-xl transition-all font-medium shadow-md mt-4 disabled:opacity-50"
             >
-              {isLogin ? 'Login' : 'Sign Up'}
+              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Sign Up')}
             </button>
           </form>
 
@@ -216,8 +242,6 @@ const AuthPage = () => {
               {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Login"}
             </button>
           </div>
-
-          
         </div>
       </motion.div>
     </div>

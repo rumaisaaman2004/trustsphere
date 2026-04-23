@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 import Modal from '../components/UI/Modal';
 
 const DonationManagement = () => {
-  const { donations, addDonation, updateDonation, deleteDonation } = useApp();
+  const { donations, addDonation, updateDonation, deleteDonation, darkMode } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDonation, setEditingDonation] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,7 +15,7 @@ const DonationManagement = () => {
     date: new Date().toISOString().split('T')[0]
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const donationData = {
       ...formData,
@@ -23,9 +23,9 @@ const DonationManagement = () => {
     };
     
     if (editingDonation) {
-      updateDonation(editingDonation.id, donationData);
+      await updateDonation(editingDonation.id, donationData);
     } else {
-      addDonation(donationData);
+      await addDonation(donationData);
     }
     
     resetForm();
@@ -57,19 +57,19 @@ const DonationManagement = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-6"
+      className="space-y-4 md:space-y-6"
     >
-      <div className="flex justify-between items-center flex-wrap gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Donation Management</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track and manage all donations</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Donation Management</h1>
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">Track and manage all donations</p>
         </div>
         <button
           onClick={() => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 text-sm md:text-base"
         >
           <FaPlus size={14} /> Add Donation
         </button>
@@ -77,42 +77,42 @@ const DonationManagement = () => {
 
       <div className="premium-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="premium-table">
-            <thead>
+          <table className="w-full min-w-[500px]">
+            <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
               <tr>
-                <th>Donor Name</th>
-                <th>Amount</th>
-                <th>Purpose</th>
-                <th>Date</th>
-                <th>Actions</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider">Donor Name</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider">Purpose</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider">Date</th>
+                <th className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {donations.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    No donations yet. Click "Add Donation" to get started.
+                  <td colSpan="5" className="px-3 md:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No donations yet
                   </td>
                 </tr>
               ) : (
                 donations.map((donation) => (
-                  <tr key={donation.id}>
-                    <td className="font-medium text-gray-900 dark:text-white">{donation.donorName}</td>
-                    <td className="text-emerald-600 dark:text-emerald-400 font-semibold">${donation.amount.toLocaleString()}</td>
-                    <td className="text-gray-600 dark:text-gray-400">{donation.purpose}</td>
-                    <td className="text-gray-500 dark:text-gray-500">{donation.date}</td>
-                    <td>
+                  <tr key={donation.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm font-medium text-gray-900 dark:text-white">{donation.donorName}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-emerald-600 dark:text-emerald-400 font-semibold">${parseFloat(donation.amount).toLocaleString()}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-gray-600 dark:text-gray-400">{donation.purpose}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm text-gray-500">{donation.date}</td>
+                    <td className="px-3 md:px-6 py-2 md:py-4 text-sm">
                       <button
                         onClick={() => handleEdit(donation)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-3 transition-colors"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 mr-2 md:mr-3"
                       >
-                        <FaEdit size={16} />
+                        <FaEdit size={14} className="md:text-base" />
                       </button>
                       <button
                         onClick={() => deleteDonation(donation.id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                        className="text-red-600 dark:text-red-400 hover:text-red-800"
                       >
-                        <FaTrash size={16} />
+                        <FaTrash size={14} className="md:text-base" />
                       </button>
                     </td>
                   </tr>
@@ -133,7 +133,7 @@ const DonationManagement = () => {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Donor Name *</label>
+            <label className="block text-sm font-medium mb-2">Donor Name *</label>
             <input
               type="text"
               required
@@ -144,7 +144,7 @@ const DonationManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount ($) *</label>
+            <label className="block text-sm font-medium mb-2">Amount ($) *</label>
             <input
               type="number"
               required
@@ -157,7 +157,7 @@ const DonationManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Purpose *</label>
+            <label className="block text-sm font-medium mb-2">Purpose *</label>
             <input
               type="text"
               required
@@ -168,7 +168,7 @@ const DonationManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date *</label>
+            <label className="block text-sm font-medium mb-2">Date *</label>
             <input
               type="date"
               required
@@ -184,7 +184,7 @@ const DonationManagement = () => {
                 setIsModalOpen(false);
                 resetForm();
               }}
-              className="btn-premium"
+              className="btn-secondary"
             >
               Cancel
             </button>

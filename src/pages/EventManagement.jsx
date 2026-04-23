@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaPlus, FaCalendar, FaMapMarker } from 'react-icons/fa';
-import { useApp } from '../context/AppContext';
+import { getEvents, createEvent, updateEvent, deleteEvent } from '../services/api';
+import toast from 'react-hot-toast';
 import Modal from '../components/UI/Modal';
 
 const EventManagement = () => {
-  const { events, addEvent, updateEvent, deleteEvent } = useApp();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [formData, setFormData] = useState({
@@ -15,15 +16,41 @@ const EventManagement = () => {
     description: ''
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingEvent) {
-      updateEvent(editingEvent.id, formData);
-    } else {
-      addEvent(formData);
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const data = await getEvents();
+      console.log('Loaded events:', data);
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to load events');
+    } finally {
+      setLoading(false);
     }
-    resetForm();
-    setIsModalOpen(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingEvent) {
+        const updated = await updateEvent(editingEvent.id, formData);
+        setEvents(events.map(e => e.id === editingEvent.id ? updated : e));
+        toast.success('Event updated!');
+      } else {
+        const newEvent = await createEvent(formData);
+        setEvents([newEvent, ...events]);
+        toast.success('Event created!');
+      }
+      resetForm();
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error('Operation failed');
+    }
   };
 
   const handleEdit = (event) => {
@@ -37,6 +64,18 @@ const EventManagement = () => {
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this event?')) {
+      try {
+        await deleteEvent(id);
+        setEvents(events.filter(e => e.id !== id));
+        toast.success('Event deleted!');
+      } catch (error) {
+        toast.error('Delete failed');
+      }
+    }
+  };
+
   const resetForm = () => {
     setEditingEvent(null);
     setFormData({
@@ -47,147 +86,76 @@ const EventManagement = () => {
     });
   };
 
-  const isUpcoming = (date) => new Date(date) >= new Date();
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black dark:border-white"></div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
-    >
-      <div className="flex justify-between items-center flex-wrap gap-4">
+    <div className="space-y-5">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Event Management</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create and manage trust events</p>
+          <p className="text-sm text-gray-500">Total: {events.length} events</p>
         </div>
         <button
           onClick={() => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="btn-primary flex items-center gap-2"
+          className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg flex items-center gap-2"
         >
-          <FaPlus size={14} /> Create Event
+          <FaPlus size={14} /> Add Event
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {events.map((event, index) => (
-          <motion.div
-            key={event.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`premium-card overflow-hidden ${
-              isUpcoming(event.date) ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-gray-500'
-            }`}
-          >
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{event.title}</h3>
+      {events.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-10 text-center border">
+          <p className="text-gray-500">No events yet. Click "Add Event" to create one.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {events.map((event) => (
+            <div key={event.id} className="bg-white dark:bg-gray-800 rounded-lg border p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-lg">{event.title}</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{event.description}</p>
                 </div>
-                <div className="flex gap-2 ml-3">
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-                  >
-                    <FaEdit size={16} />
-                  </button>
-                  <button
-                    onClick={() => deleteEvent(event.id)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
-                  >
-                    <FaTrash size={16} />
-                  </button>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEdit(event)} className="text-blue-600">✏️</button>
+                  <button onClick={() => handleDelete(event.id)} className="text-red-600">🗑️</button>
                 </div>
               </div>
-              <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-800">
-                <div className="flex items-center text-gray-600 dark:text-gray-400">
-                  <FaCalendar className="mr-2 text-gray-500 dark:text-gray-500" size={14} />
-                  <span className="text-sm">{new Date(event.date).toLocaleDateString()}</span>
+              <div className="mt-3 pt-2 border-t">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <FaCalendar size={12} /> {new Date(event.date).toLocaleDateString()}
                 </div>
-                <div className="flex items-center text-gray-600 dark:text-gray-400">
-                  <FaMapMarker className="mr-2 text-gray-500 dark:text-gray-500" size={14} />
-                  <span className="text-sm">{event.location}</span>
+                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                  <FaMapMarker size={12} /> {event.location}
                 </div>
               </div>
             </div>
-          </motion.div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          resetForm();
-        }}
-        title={editingEvent ? 'Edit Event' : 'Create New Event'}
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="input-premium"
-              placeholder="Enter event title"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date *</label>
-            <input
-              type="date"
-              required
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="input-premium"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location *</label>
-            <input
-              type="text"
-              required
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="input-premium"
-              placeholder="Enter location"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
-            <textarea
-              rows="3"
-              required
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="input-premium"
-              placeholder="Enter description"
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setIsModalOpen(false);
-                resetForm();
-              }}
-              className="btn-premium"
-            >
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary">
-              {editingEvent ? 'Update' : 'Create'} Event
-            </button>
+      <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title={editingEvent ? 'Edit Event' : 'New Event'}>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input type="text" placeholder="Title" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full p-2 border rounded dark:bg-gray-800" />
+          <input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full p-2 border rounded dark:bg-gray-800" />
+          <input type="text" placeholder="Location" required value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full p-2 border rounded dark:bg-gray-800" />
+          <textarea placeholder="Description" required rows="2" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full p-2 border rounded dark:bg-gray-800" />
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-3 py-1 bg-gray-300 dark:bg-gray-700 rounded">Cancel</button>
+            <button type="submit" className="px-3 py-1 bg-black text-white dark:bg-white dark:text-black rounded">{editingEvent ? 'Update' : 'Create'}</button>
           </div>
         </form>
       </Modal>
-    </motion.div>
+    </div>
   );
 };
 
